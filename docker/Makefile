@@ -12,9 +12,7 @@ APP_VCS_URI     		:= "$(APP_VCS_PROVIDERAPP_NAMESPACE)/$(APP_NAME)"
 
 ## project dirs & config files
 APP_DATA_DIR          	:= "$(CURDIR)/data"
-APP_CONTRIB_DIR       	:= "$(CURDIR)/contrib"
-APP_ADDONS_DIR        	:= "$(CURDIR)/addons"
-APP_INDEX_MAPPING_FILE	:= "$(CURDIR)/bleve/mapping.json"
+APP_INDEX_MAPPING_FILE	:= "$(CURDIR)/conf/$(APP_NAME)/mapping.json"
 
 # network settings
 APP_API_HOST  			:= 0.0.0.0
