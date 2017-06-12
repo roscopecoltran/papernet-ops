@@ -5,6 +5,8 @@ MAINTAINER Rosco Pecoltran <rosco.pecoltran@msn.com>
 ARG PROJECT_VCS_PROVIDER=${PROJECT_VCS_PROVIDER:-"github.com"}
 ARG PROJECT_NAMESPACE=${PROJECT_NAMESPACE:-"bobinette"}
 ARG PROJECT_NAME=${PROJECT_NAME:-"papernet"}
+ARG PROJECT_VCS_BRANCH=${PROJECT_VCS_BRANCH:-master}
+# ARG PROJECT_VCS_REF=${PROJECT_VCS_REF:-"github.com/bobinette/papernet"}
 
 ## Global 'ENV' variables
 ENV PROJECT_VCS_PROVIDER=${PROJECT_VCS_PROVIDER} \
@@ -42,7 +44,7 @@ ARG ALPINE_PKG_DEL_STACKS="INTERACTIVE BUILD"
 ADD https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-amd64 /usr/local/sbin/gosu
 
 # Add sources
-ADD . /app
+# ADD . /app
 
 # Set default work directory
 WORKDIR /app
@@ -50,6 +52,9 @@ WORKDIR /app
 # Install runtime dependencies & create runtime user
 RUN	chmod +x /usr/local/sbin/gosu \
     && adduser -D app -h /data -s /bin/sh \
+    && mkdir -p /app \
+    && cd /app \
+    && git clone --recursive --depth=1 -b ${PROJECT_VCS_BRANCH:-master} https://${PROJECT_VCS_PROVIDER}/${PROJECT_NAMESPACE}/${PROJECT_NAME} \
     && if [ ${APP_PREBUILD_ALL} ];then chmod +x ./docker/build.sh; ./docker/build.sh; fi
     
 # NSSwitch configuration file
