@@ -1,0 +1,88 @@
+version: '2.1'
+
+services:
+
+### Applications Code Container #############################
+
+  #data: 
+  #  image: tianon/true             # scratch base images are not working on AWS
+  #  volumes:
+  #    - ${PWD}/data:/app/data           # shared volume for data and index mapping
+
+  backend_dev:    
+    image: papernet-backend:alpine-go1.8-dev
+    container_name: backend_dev
+    build: 
+      context: projects/github.com/bobinette/papernet
+      dockerfile: Dockerfile.build
+      args:
+        - APP_PREBUILD_ALL=true         # pre-install build dependencies, compile binaries, generate json key file, index 
+        - APP_PREBUILD_DEL=false        # delete all build dependencies used during the pre-build step (default: apk + GOPATH)
+        - APP_PREBUILD_AUTH=mkjwk       # available options: mkjwk, google_oauth2 (not ready yet)
+        - GOLANG_PKG_MANAGER=glide      # available options: glide, godep
+        - XC_BUILD=false                # if false, build binaries for linux/amd64 only. if true, cross-build for linux/darwin with arch 386/amd64. (optional, dependency with `gox`) 
+        - XC_ARCH="amd64"               # available options (requires `gox`): amd64, 386, amd64p32, ppc64, ppc64le, arm, arm64. (optional, space separated)
+        - XC_OS="linux"                 # available options (requires `gox`): darwin,linux,freebsd,openbsd,windows,freebsd,netbsd,plan9,dragonfly,nacl,solaris,android
+    environment:
+      - APP_INDEX_MAPPING_FILE=/app/configuration/papernet/mapping.json
+      - ENTRYPOINT_ECHO=true
+      - ENTRYPOINT_MODE=rebuild
+    ports:
+      - 1705:1705
+    #restart: unless-stopped
+    entrypoint: ["./docker/entrypoint.sh"]
+    command:    ["xc"] 
+    networks:
+     - default
+    # depends_on: ["data"]
+    volumes:
+      - ${PWD}/conf/certs:/app/certs                # shared volume for SSL certificates
+      - ${PWD}/dist/cli/papernet:/dist/cli          # will store all generated binaries
+      - ${PWD}/dist/web/papernet:/dist/web          # will store all generated binaries
+      - ${PWD}/data/papernet:/app/data              # shared volume for data
+      - ${PWD}/conf/papernet:/app/configuration     # shared volume for index mapping
+    labels:
+      - "org.label-schema.vendor=bobinette"
+      - "org.label-schema.url=https://github.com/bobinette/papernet"
+      - "org.label-schema.name=Papernet - Dev container"
+      - "org.label-schema.description=Very simple tool to keep track of the papers you read."
+      - "org.label-schema.version=0.9.1"
+      - "org.label-schema.docker.schema-version=1.0"
+
+  frontend_dev:    
+    image: papernet-front:alpine-nodejs-dev
+    container_name: frontend_dev
+    build: 
+      context: projects/github.com/bobinette/papernet-front
+      dockerfile: Dockerfile.build
+    command: ["./docker/entrypoint.sh", "build"] # dev, devv, build, bash, bashplus
+    ports:
+      - 8081:8080
+    #restart: unless-stopped
+    networks:
+      - default
+    volumes:
+      # - ./projects/github.com/bobinette/papernet-front:/dist/content
+      - ./dist/front/papernet/content:/dist/content
+    depends_on: ["backend_dev"]
+    links:
+      - backend_dev
+    labels:
+      - "org.label-schema.vendor=bobinette"
+      - "org.label-schema.url=https://github.com/bobinette/papernet-front"
+      - "org.label-schema.name=Papernet - Front-end - Dev Container"
+      - "org.label-schema.description=Front-end of the papernet project."
+      - "org.label-schema.version=0.9.3"
+      - "org.label-schema.docker.schema-version=1.0"
+
+### Networks Setup ############################################
+
+#networks:
+#  backend:
+#    driver: "bridge"
+
+### Volumes Setup #############################################
+
+#volumes:
+#  papernet_data:
+#    driver: 'local'

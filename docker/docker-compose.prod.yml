@@ -1,0 +1,88 @@
+version: '2.1'
+
+services:
+
+### Applications Code Container #############################
+
+  #data: 
+  #  image: tianon/true             # scratch base images are not working on AWS
+  #  volumes:
+  #    - ./data:/app/data           # shared volume for data and index mapping
+  
+
+  front:
+    image: papernet-front:caddy-latest
+    container_name: front
+    build: 
+      context: dist/front/papernet
+      dockerfile: Dockerfile.alpine.caddy # or Dockerfile.alpine.nginx
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    command: ["/usr/bin/caddy", "-conf", "/etc/Caddyfile"]
+    volumes:
+      - ./data/papernet:/app/data
+      - ./conf/certs:/app/conf
+    #network_mode: "host"
+    networks:
+     - default
+
+  cli:
+    image: papernet-cli:scratch-latest
+    container_name: cli
+    build: 
+      context: ./dist/cli/papernet
+      dockerfile: Dockerfile.scratch
+    expose:
+      - 1705
+    entrypoint: /app/papernet_cli
+    # command: ["index", "create", "--index=/app/data/papernet.index", "--mapping=/app/data/mapping.json"]
+    networks:
+      - default
+    volumes:
+      - ./data/papernet:/app/data
+      - ./conf/certs:/app/conf
+    labels:
+      - "org.label-schema.vendor=bobinette"
+      - "org.label-schema.url=https://github.com/bobinette/papernet"
+      - "org.label-schema.name=Papernet - CLI"
+      - "org.label-schema.description=Very simple tool to keep track of the papers you read."
+      - "org.label-schema.version=0.9.1"
+      - "org.label-schema.docker.schema-version=1.0"
+
+  web:
+    image: papernet-web:scratch-latest
+    container_name: web
+    build: 
+      context: ./dist/web/papernet
+      dockerfile: Dockerfile.scratch
+    ports:
+      - 1705:1705
+    restart: unless-stopped
+    entrypoint: /app/papernet_web
+    # command: ["--port", "1705"]
+    networks:
+      - default
+    volumes:
+      - ./data/papernet:/app/data
+      - ./conf/certs:/app/conf
+    labels:
+      - "org.label-schema.vendor=bobinette"
+      - "org.label-schema.url=https://github.com/bobinette/papernet"
+      - "org.label-schema.name=Papernet - Web API"
+      - "org.label-schema.description=Very simple tool to keep track of the papers you read."
+      - "org.label-schema.version=0.9.1"
+      - "org.label-schema.docker.schema-version=1.0"
+
+### Networks Setup ############################################
+
+#networks:
+#  backend:
+#    driver: "bridge"
+
+### Volumes Setup #############################################
+
+#volumes:
+#  papernet_data:
+#    driver: 'local'
+
