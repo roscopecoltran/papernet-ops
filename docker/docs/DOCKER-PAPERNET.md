@@ -4,14 +4,14 @@ This section explains how to compile Papernet 'back-end' with 'docker' cli or 'd
 
 It allows to:
 - Run a development docker container for Papernet back-end components
-- Wrap distribution version of its components into small sized and secured docker containers (scratch or alpine+gosu)
+- Wrap distribution binaries into a small sized and secured docker container (scratch or alpine 3.6 with gosu)
 
 ## Quick 
 ```bash
 make compose.all
 ```
 
-## with Docker Compose
+## with Docker Compose (recommended)
 
 ### Builld 'DEV' container for Papernet 'BACK-END'
 ```bash

@@ -31,7 +31,7 @@ services:
       - "org.label-schema.description=Front-end of the papernet project."
       - "org.label-schema.version=0.9.3"
       - "org.label-schema.docker.schema-version=1.0"
-      - "papernet.component.groupd=frontend"
+      - "papernet.component.group=frontend"
       - "papernet.component.type=dist"
 
   cli:

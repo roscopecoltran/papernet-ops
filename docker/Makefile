@@ -92,7 +92,8 @@ DOCKER_RUN_OPTS     	:= $(PAPERNET_ENVS) $(PAPERNET_MOUNT) "$(PAPERNET_DEV_IMAGE
 DOCKER_RUN_APP      	:= docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_APP_NOTTY	:= docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
 
-compose.all: papernet.docker.compose.all
+docker.build.all: papernet.docker.build.all
+docker.compose.all: papernet.docker.compose.all
 
 # local targets
 local.default: binary

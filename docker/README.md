@@ -6,14 +6,23 @@ It allows to:
 - Run a development docker container for Papernet contributors
 - Wrap distribution version of its components into small sized and secured docker containers (scratch or alpine+gosu)
 
-## Quick with Docker
+## Quick 
+
+### with Docker Compose (recommended)
 ```bash
-make compose.all
+make docker.compose.all
 ```
 
-## Quick with Docker Compose
+### with Docker
 ```bash
-make compose.all
+make docker.build.all
 ```
 
+## with Docker Compose
 
+## with Docker
+
+## List docker-containers:
+```bash
+docker images --filter "label=papernet.component.group=backend"
+```
