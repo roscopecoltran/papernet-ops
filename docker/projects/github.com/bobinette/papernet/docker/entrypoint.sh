@@ -17,25 +17,8 @@ export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
 export APP_CERTIFICATES="/app/configuration/certs"
 export APP_SSL_SELFSIGNED_BASENAME="${PROJECT_NAME}_self-signed"
 
-# /dist/{{.Dir}}/xc/{{.OS}}/${PROJECT_NAME}-{{.OS}}-{{.Arch}}-{{.Dir}}
-
 export APP_WEB="/dist/web/xc/linux/${PROJECT_NAME}-linux-amd64-web"
 export APP_CLI="/dist/cli/xc/linux/${PROJECT_NAME}-linux-amd64-cli"
-
-ls -l /dist/xc/web/linux/
-ls -l /dist/xc/cli/linux/
-
-mkdir -p /dist/cli
-if [ -f "${APP_CLI}" ];then
-	rm -f /dist/cli/${PROJECT_NAME}_cli
-	cp ${APP_CLI} /dist/cli/${PROJECT_NAME}_cli
-fi
-
-mkdir -p /dist/web
-if [ -f "${APP_WEB}" ];then
-	rm -f /dist/web/${PROJECT_NAME}_web
-	cp ${APP_WEB} /dist/web/${PROJECT_NAME}_web
-fi
 
 if [ -d "/tmp/go" ];then
 	export GOPATH=/tmp/go
@@ -43,29 +26,11 @@ if [ -d "/tmp/go" ];then
 	export PROJECT_SOURCE_PATH=${GOPATH}/src/${PROJECT_VCS_PROVIDER}/${PROJECT_NAMESPACE}/${PROJECT_NAME}
 fi
 
-if [ "$ENTRYPOINT_MODE" == "build_run" ];then
-
-	APK_BUILD=""
+generate_oauth_basic () {
 
 	set +e
-	GIT_EXECUTABLE=$(which git)
-	GOLANG_EXECUTABLE=$(which go)
-	GOX_EXECUTABLE=$(which gox)
-	GLIDE_EXECUTABLE=$(which glide)
-	GODEP_EXECUTABLE=$(which dep)
-	NUT_EXECUTABLE=$(which dep)
-	MYKE_EXECUTABLE=$(which myke)
-	MKJWK_EXECUTABLE=$(which mkjwk)		
-	BASH_EXECUTABLE=$(which bash)
-	OPENSSL_EXECUTABLE=$(which openssl)
-
+	MKJWK_EXECUTABLE=$(which mkjwk)
 	set -e
-
-	if [ "${GIT_EXECUTABLE}" == "" ]; then
-		# --no-progress 
-		apk update 
-		apk --no-cache add git 
-	fi
 
 	if [ "${MKJWK_EXECUTABLE}" != "" ]; then
 		mkdir -p ${APP_CERTIFICATES}
@@ -79,15 +44,23 @@ if [ "$ENTRYPOINT_MODE" == "build_run" ];then
 		cp -f rsa_key.jwk /dist/web/conf/${PROJECT_NAME}_rsa-key.jwk
 	fi
 
+}
+
+
+generate_self_signed () {
+
+	set +e
+	OPENSSL_EXECUTABLE=$(which openssl)
+	set -e
+
 	if [ "${OPENSSL_EXECUTABLE}" != "" ]; then
-		# rm -fR ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.*
-		openssl req -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.csr -subj "/C=US/ST=California/L=Los Angeles/O=Default Company Ltd" -new -newkey rsa:2048 -nodes -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key
-		openssl req -x509 -sha256 -nodes -days 365 -subj "/C=US/ST=California/L=Los Angeles/O=Default Company Ltd" -newkey rsa:2048 -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.crt
+		openssl req -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.csr -subj "${APP_PREBUILD_SSL_SELFSIGNED_SUBJ}" -new -newkey rsa:2048 -nodes -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key
+		openssl req -x509 -sha256 -nodes -days 365 -subj "${APP_PREBUILD_SSL_SELFSIGNED_SUBJ}" -newkey rsa:2048 -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.crt
 		cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/web/conf/
 		cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/cli/conf/
 	fi
 
-fi
+}
 
 cross_buid () {
 
@@ -122,6 +95,9 @@ cross_buid () {
 
 	echo " - APP_CLI: ${APP_CLI}"
 	echo " - APP_WEB: ${APP_WEB}"
+
+	generate_oauth_basic
+	generate_self_signed
 
 	#if [ -f "${APP_CLI}" ];then
 		mkdir -p /dist/cli
@@ -219,9 +195,13 @@ case "$CASE" in
 	;;
 
   *)
-	cross_buid
+
+	touch /dist/web/${PROJECT_NAME}_web
+	touch /dist/cli/${PROJECT_NAME}_cli
+
+	generate_oauth_basic
+	generate_self_signed
+
 	echo " *** Dev Container '${APP_NAME} Back-End' *** exit now..."
 	;;
 esac
-
-# exit $?

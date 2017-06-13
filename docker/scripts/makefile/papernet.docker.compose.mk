@@ -35,9 +35,9 @@ papernet.docker.compose.all: docker.is.cache papernet.docker.compose.dev.all pap
 # make papernet.docker.compose.all DOCKER_BUILD_NOCACHE=true
 
 # Examples:
-# - make papernet.docker.compose.backend.dev.all 
-# - make papernet.docker.compose.backend.dev.all DOCKER_BUILD_NOCACHE=true
-papernet.docker.compose.backend.dev.all: papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.backend.run papernet.docker.compose.dist.backend.cli.wrap papernet.docker.compose.dist.backend.web.wrap
+# - papernet.docker.compose.backend.all
+# - papernet.docker.compose.backend.all DOCKER_BUILD_NOCACHE=true
+papernet.docker.compose.backend.all: papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.backend.run papernet.docker.compose.dist.backend.cli.wrap papernet.docker.compose.dist.backend.web.wrap
 
 papernet.docker.compose.dist.backend.cli.wrap:
 	@docker-compose -f docker-compose.prod.yml build $(DOCKER_BUILD_CACHE_ARG) cli

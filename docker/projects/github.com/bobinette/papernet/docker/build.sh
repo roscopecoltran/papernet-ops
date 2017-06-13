@@ -2,9 +2,6 @@
 set -x
 set -e
 
-# Rosco Pecoltran - 2017
-# This script builds the application from source for multiple platforms.
-
 # Set temp environment vars
 export GOPATH=/tmp/go
 export PATH=${PATH}:${GOPATH}/bin
@@ -20,13 +17,9 @@ if [ "$GOLANG_PKG_MANAGER" == "glide" ];then
 elif [ "$GOLANG_PKG_MANAGER" == "godep" ];then
   export CCACHE_DIR="${GOPATH}/godep/cache"
   mkdir -p ${CCACHE_DIR}
-  #export HOME="${GOPATH}/godep/home"
-  #mkdir -p ${HOME}
-
 fi
 
 # Install build deps
-# apk update
 apk --no-cache --no-progress --virtual INTERACTIVE add ${ALPINE_PKG_INTERACTIVE}
 apk --no-cache --no-progress --virtual BUILD add ${ALPINE_PKG_BUILD}
 
@@ -57,7 +50,6 @@ fi
 
 if [ "$GOLANG_PKG_MANAGER" == "glide" ];then
   go get -v github.com/Masterminds/glide
-#elif [ "$GOLANG_PKG_MANAGER" == "godep" ];then
 else
   go get -u -v github.com/golang/dep/...
 fi
@@ -70,11 +62,7 @@ cd ${BUILDPATH}
 if [ "$GOLANG_PKG_MANAGER" == "glide" ];then
   glide install --strip-vendor
   # nb. go test $(glide novendor)
-
 else
-#elif [ "$GOLANG_PKG_MANAGER" == "godep" ];then
-  # bug. https://github.com/golang/dep/issues/372
-  # dep init
   dep ensure
 fi
 
@@ -112,25 +100,11 @@ fi
 tree /dist/xc/
 
 # copy binaries for dist containers/wrappers
-cp -f /dist/xc/linux/cli/${PROJECT_NAME}-darwin-amd64-cli /dist/cli/${PROJECT_NAME}_cli
-cp -f /dist/xc/linux/web/${PROJECT_NAME}-darwin-amd64-web /dist/web/${PROJECT_NAME}_web
+mkdir -p /dist/cli
+mkdir -p /dist/web
 
-# Make sure "papernet-papernet" is renamed properly
-for PLATFORM in $(find /dist -mindepth 1 -maxdepth 1 -type d); do
-  set +e
-  mv ${PLATFORM}/${PROJECT_NAME}-${PROJECT_NAME}.exe ${PLATFORM}/${PROJECT_NAME}.exe 2>/dev/null
-  mv ${PLATFORM}/${PROJECT_NAME}-${PROJECT_NAME} ${PLATFORM}/${PROJECT_NAME} 2>/dev/null
-  set -e
-done
-
-# Move all the compiled things to the $GOPATH/bin
-GOPATH=${GOPATH:-$(go env GOPATH)}
-case $(uname) in
-  CYGWIN*)
-      GOPATH="$(cygpath $GOPATH)"
-      ;;
-esac
-OLDIFS=$IFS
+cp -f /dist/xc/linux/cli/${PROJECT_NAME}-linux-amd64-cli /dist/cli/${PROJECT_NAME}_cli
+cp -f /dist/xc/linux/web/${PROJECT_NAME}-linux-amd64-web /dist/web/${PROJECT_NAME}_web
 
 if [ "$APP_PREBUILD_AUTH" == "mkjwk" ];then
   go get -v -u github.com/dqminh/organizer/mkjwk
@@ -145,22 +119,9 @@ if [ "$APP_TASK_MANAGER" != "" ];then
   go get -v -u ${APP_TASK_MANAGER}
 fi
 
-#IFS=: 
-#MAIN_GOPATH=($GOPATH)
-#IFS=$OLDIFS
-
-# Copy our OS/Arch to the bin/ directory
-# echo "==> Copying binaries for this platform..."
-# DEV_PLATFORM="./dist/$(go env GOOS)_$(go env GOARCH)"
-# for F in $(find ${DEV_PLATFORM} -mindepth 1 -maxdepth 1 -type f); do
-  # cp -Rf ${F} /bin/
-  # cp ${F} ${MAIN_GOPATH}/bin/
-# done
-
 # Done!
 echo
 echo "==> Results:"
-#ls -hl /dist/
 tree /dist/
 
 # cleanup
@@ -168,11 +129,7 @@ if [ "${APP_PREBUILD_DEL}" == "true" ];then
 
   # Cleanup GOPATH
   rm -r ${GOPATH}
-
-  # Remove stack of deps 'BUILD'
-  # for STACK_NAME in ${ALPINE_PKG_DEL_STACKS[@]}; do
-    apk --no-cache del BUILD # --no-progress 
-  # done
+  apk --no-cache del BUILD # --no-progress 
 
 fi
 

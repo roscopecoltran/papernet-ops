@@ -1,3 +1,16 @@
+####################################################################################
+# Makefile (configuration file for GNU make - see http://www.gnu.org/software/make/)
+#     __  __       _         __ _ _
+#    |  \/  | __ _| | _____ / _(_) | ___
+#    | |\/| |/ _` | |/ / _ \ |_| | |/ _ \
+#    | |  | | (_| |   <  __/  _| | |  __/
+#    |_|  |_|\__,_|_|\_\___|_| |_|_|\___|
+#
+#
+####################################################################################
+#
+############################## Variables Declarations ##############################
+
 .PHONY: all
 
 ## #################################################################
@@ -11,8 +24,7 @@ APP_VCS_PROVIDER		:= "github.com"
 APP_VCS_URI     		:= "$(APP_VCS_PROVIDERAPP_NAMESPACE)/$(APP_NAME)"
 
 ## project dirs & config files
-APP_DATA_DIR          	:= "$(CURDIR)/data"
-APP_INDEX_MAPPING_FILE	:= "$(CURDIR)/conf/$(APP_NAME)/mapping.json"
+APP_DATA_DIR          	:= "$(CURDIR)/data/$(APP_NAME)"
 
 # network settings
 APP_API_HOST  			:= 0.0.0.0
@@ -53,96 +65,43 @@ include $(CURDIR)/scripts/makefile/experimental/*.mk
 
 ## sub-projects (official) addons helpers
 include $(CURDIR)/scripts/makefile/papernet*.mk
-include $(CURDIR)/scripts/makefile/elasticfeed*.mk
 
 ## #################################################################
 ## Project docker info
 ## #################################################################
 
-## docker
-DOCKER_BUILD_NOCACHE			:= true
+## docker registry
 DOCKER_IMAGE_TAG 				:= "latest"
-DOCKERFILE_DEV               	:= "Dockerfile.build.alpine"
-DOCKERFILE_DEFAULT_ENTRYPOINT	:= "bashpp"
-
-DOCKERFILE_BACKEND_BASE_DIST	:= "scratch" 
-DOCKERFILE_BACKEND_CLI_DIST 	:= "dist/cli/Dockerfile.$(DOCKERFILE_BACKEND_BASE_DIST)"
-DOCKERFILE_BACKEND_WEB_DIST 	:= "dist/web/Dockerfile.$(DOCKERFILE_BACKEND_BASE_DIST)"
-
-DOCKER_BUILD_CACHE_ARG			:= $(if $(filter $(DOCKER_BUILD_NOCACHE),true), --no-cache)
-
 DOCKER_USERNAME  				:= "$(APP_NAMESPACE)"
 DOCKER_IMAGE_NAME				:= "$(APP_NAME)"
 
-DOCKER_ENVS := \
-	-e OS_ARCH_ARG \
-	-e OS_PLATFORM_ARG \
-	-e TESTFLAGS \
-	-e VERBOSE \
-	-e VERSION \
-	-e CODENAME \
-	-e TESTDIRS \
-	-e CI
+## dockerfile - default filename
+DOCKERFILE_DEV               	:= "Dockerfile.build.alpine"
 
-APP_MOUNT    			:= -v "$(CURDIR)/$(BIND_DIR):/go/src/$(APP_VCS_URI)/$(BIND_DIR)"
-APP_DEV_IMAGE			:= $(APP_NAME)-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
-APP_IMAGE    			:= $(if $(REPONAME),$(REPONAME),"$(DOCKER_USERNAME)/$(DOCKER_IMAGE_NAME)")
+## docker cache system
+DOCKER_BUILD_NOCACHE			:= true
+DOCKER_BUILD_CACHE_ARG			:= $(if $(filter $(DOCKER_BUILD_NOCACHE),true), --no-cache)
 
-DOCKER_RUN_OPTS     	:= $(PAPERNET_ENVS) $(PAPERNET_MOUNT) "$(PAPERNET_DEV_IMAGE)"
-DOCKER_RUN_APP      	:= docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
-DOCKER_RUN_APP_NOTTY	:= docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+# Docker-Compose: build FRONT and BACK components for dev and production mode
+docker.compose.all: docker.is.cache docker.config.dispatch.all papernet.docker.compose.all
+docker.compose.backend: docker.is.cache docker.config.dispatch.all papernet.docker.compose.backend.all
+docker.compose.frontend: docker.is.cache docker.config.dispatch.all papernet.docker.compose.frontend.all
 
-docker.build.all: papernet.docker.build.all
-docker.compose.all: papernet.docker.compose.all
+# Configuration files
+docker.config.dispatch.all: docker.is.first.time docker.config.dispatch.backend
+docker.config.dispatch.backend:
+	@echo " copy/dispatch configuration files for 'back-end' containers"
 
-# local targets
-local.default: binary
-local.all: deps cross
+## notes:
+##  - Dispatch demo/dev configuration files to dist folders before, either the developers will manage those configuration files
+
+# Quick checks
+docker.is.first.time:
+	@echo "check if the demo/dev configuration files have already been dispatched to dist folders..."
 
 docker.is.cache:
 	@echo "is docker using cache system?"
 	@echo " - DOCKER_BUILD_NOCACHE=$(DOCKER_BUILD_NOCACHE)"
 	@echo " - DOCKER_BUILD_CACHE_ARG=$(DOCKER_BUILD_CACHE_ARG)"
 
-local.dist:
-	@mkdir -p $(BIND_PATH)
-
-local.lint:
-	script/validate-golint
-
-local.fmt:
-	gofmt -s -l -w $(SRCS)
-
-local.index:
-	mkdir -p $(APP_DATA_DIR)
-	go run cmd/cli/*.go index create --index=$(APP_DATA_DIR)/$(APP_NAME).index --mapping=$(APP_INDEX_MAPPING_FILE)
-
-local.clean_all: clean_bin clean_data # clean_deps
-
-local.clean_bin:
-	@rm -fR $(CURDIR)/$(BIND_DIR)
-	@mkdir -p $(CURDIR)/$(BIND_DIR)
-
-local.clean_data:
-	@rm -fR $(APP_DATA_DIR)
-	@mkdir -p $(APP_DATA_DIR)
-
-local.binary:
-	@mkdir -p ./$(BIND_DIR)
-	@go build -o ./$(BIND_DIR)/web/$(APP_NAME)_web cmd/web/main.go
-	@go build -o ./$(BIND_DIR)/cli/$(APP_NAME)_cli cmd/cli/*.go
-
-local.test-local:
-	@go test $(TEST) $(TESTARGS) -timeout=10s
-
-local.testrace:
-	@go test -race $(TEST) $(TESTARGS)
-
-local.deps:
-	@go get -u github.com/tools/godep
-	@dep ensure
-
-local.deps.glide:
-	@go get -u -v github.com/Masterminds/glide
-	@glide install --strip-vendor
 

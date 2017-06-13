@@ -12,12 +12,17 @@ ENV PROJECT_VCS_PROVIDER=${PROJECT_VCS_PROVIDER} \
     PROJECT_NAMESPACE=${PROJECT_NAMESPACE} \
 	PROJECT_NAME=${PROJECT_NAME}
 
-## Build Tasks - Settings
-ARG APP_TASK_MANAGER=${APP_TASK_MANAGER:-"github.com/Nananas/ymake"}
+## Build Tasks - Settings (not used for Papernet Suite)
+# ARG APP_TASK_MANAGER=${APP_TASK_MANAGER:-"github.com/Nananas/ymake"}
 
 ## Pre-build - Settings
 ARG APP_PREBUILD_ALL=${APP_PREBUILD_ALL:-true}
 ARG APP_PREBUILD_DEL=${APP_PREBUILD_DEL:-true}
+
+## Certs
+ARG APP_PREBUILD_SSL_SELFSIGNED_SUBJ=${APP_PREBUILD_SSL_SELFSIGNED_SUBJ:-"/C=US/ST=California/L=Los Angeles/O=Default Company Ltd"}
+
+## Authentication
 ARG APP_PREBUILD_AUTH=${APP_PREBUILD_AUTH:-mkjwk}
 
 ## Compilation - Settings
@@ -62,7 +67,7 @@ RUN	chmod +x /usr/local/sbin/gosu \
 COPY docker/config/nsswitch.conf /etc/nsswitch.conf
 
 # Container configuration
-VOLUME ["/data", "/dist", "/app/configuration"]
+VOLUME ["/data", "/dist", "/app/configuration", "/app/certs"]
 EXPOSE 1705
 
 # Container entrypoints
