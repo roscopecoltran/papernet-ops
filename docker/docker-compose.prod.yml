@@ -9,13 +9,12 @@ services:
   #  volumes:
   #    - ./data:/app/data           # shared volume for data and index mapping
   
-
   front:
     image: papernet-front:caddy-latest
     container_name: front
     build: 
       context: dist/front/papernet
-      dockerfile: Dockerfile.alpine.caddy # or Dockerfile.alpine.nginx
+      dockerfile: Dockerfile.caddy.alpine # or Dockerfile.alpine.nginx
     ports:
       - 8080:8080
     restart: unless-stopped
@@ -28,11 +27,11 @@ services:
      - default
 
   cli:
-    image: papernet-cli:scratch-latest
-    container_name: cli
+    image: papernet-backend-cli:alpine-dist
+    container_name: papernet_cli
     build: 
       context: ./dist/cli/papernet
-      dockerfile: Dockerfile.scratch
+      dockerfile: Dockerfile.dist.alpine
     expose:
       - 1705
     entrypoint: /app/papernet_cli
@@ -51,11 +50,11 @@ services:
       - "org.label-schema.docker.schema-version=1.0"
 
   web:
-    image: papernet-web:scratch-latest
-    container_name: web
+    image: papernet-backend-web:alpine-dist
+    container_name: papernet_web
     build: 
       context: ./dist/web/papernet
-      dockerfile: Dockerfile.scratch
+      dockerfile: Dockerfile.dist.alpine
     ports:
       - 1705:1705
     restart: unless-stopped

@@ -14,7 +14,7 @@ services:
     container_name: backend_dev
     build: 
       context: projects/github.com/bobinette/papernet
-      dockerfile: Dockerfile.build
+      dockerfile: Dockerfile.build.alpine
       args:
         - APP_PREBUILD_ALL=true         # pre-install build dependencies, compile binaries, generate json key file, index 
         - APP_PREBUILD_DEL=false        # delete all build dependencies used during the pre-build step (default: apk + GOPATH)
@@ -29,18 +29,15 @@ services:
       - ENTRYPOINT_MODE=rebuild
     ports:
       - 1705:1705
-    #restart: unless-stopped
     entrypoint: ["./docker/entrypoint.sh"]
-    command:    ["xc"] 
     networks:
      - default
-    # depends_on: ["data"]
     volumes:
-      - ${PWD}/conf/certs:/app/certs                # shared volume for SSL certificates
-      - ${PWD}/dist/cli/papernet:/dist/cli          # will store all generated binaries
-      - ${PWD}/dist/web/papernet:/dist/web          # will store all generated binaries
-      - ${PWD}/data/papernet:/app/data              # shared volume for data
-      - ${PWD}/conf/papernet:/app/configuration     # shared volume for index mapping
+      - ${PWD}/conf/certs:/app/certs                    # shared volume for SSL certificates
+      - ${PWD}/conf/papernet:/app/configuration         # shared volume for index mapping
+      - ${PWD}/data/papernet:/app/data                  # shared volume for data
+      - ${PWD}/dist/cli/papernet/bin:/dist/cli          # will store all generated binaries
+      - ${PWD}/dist/web/papernet/bin:/dist/web          # will store all generated binaries
     labels:
       - "org.label-schema.vendor=bobinette"
       - "org.label-schema.url=https://github.com/bobinette/papernet"
@@ -54,11 +51,10 @@ services:
     container_name: frontend_dev
     build: 
       context: projects/github.com/bobinette/papernet-front
-      dockerfile: Dockerfile.build
+      dockerfile: Dockerfile.alpine.build
     command: ["./docker/entrypoint.sh", "build"] # dev, devv, build, bash, bashplus
     ports:
-      - 8081:8080
-    #restart: unless-stopped
+      - 8080:8080
     networks:
       - default
     volumes:

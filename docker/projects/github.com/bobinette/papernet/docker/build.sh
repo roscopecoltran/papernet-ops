@@ -28,7 +28,6 @@ fi
 # Install build deps
 # apk update
 apk --no-cache --no-progress --virtual INTERACTIVE add ${ALPINE_PKG_INTERACTIVE}
-apk --no-cache --no-progress --virtual RUNTIME add ${ALPINE_PKG_RUNTIME} 
 apk --no-cache --no-progress --virtual BUILD add ${ALPINE_PKG_BUILD}
 
 # Get the parent directory of where this script is.
@@ -111,6 +110,10 @@ else
 fi
 
 tree /dist/xc/
+
+# copy binaries for dist containers/wrappers
+cp -f /dist/xc/linux/cli/${PROJECT_NAME}-darwin-amd64-cli /dist/cli/${PROJECT_NAME}_cli
+cp -f /dist/xc/linux/web/${PROJECT_NAME}-darwin-amd64-web /dist/web/${PROJECT_NAME}_web
 
 # Make sure "papernet-papernet" is renamed properly
 for PLATFORM in $(find /dist -mindepth 1 -maxdepth 1 -type d); do

@@ -14,13 +14,13 @@
 ## #################################################################
 ## COMMON
 ## #################################################################
-$(APP_NAME).docker.compose.all: docker.is.cache papernet.docker.compose.dev.all papernet.docker.compose.dist.all
-
 # papernet.docker.compose.dev.all: papernet.docker.compose.dist.generated.cleanup papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.frontend.build
-$(APP_NAME).docker.compose.dev.all: docker.is.cache papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.frontend.build
+papernet.docker.compose.dev.all: docker.is.cache papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.frontend.build
 
 # papernet.docker.compose.dist.all: papernet.docker.compose.dist.generated.cleanup papernet.docker.compose.dist.backend.build papernet.docker.compose.dist.frontend.build
-$(APP_NAME).docker.compose.dist.all: docker.is.cache papernet.docker.compose.dist.backend.wrap papernet.docker.compose.dist.backend.build papernet.docker.compose.dist.frontend.build
+papernet.docker.compose.dist.all: docker.is.cache papernet.docker.compose.dist.backend.wrap papernet.docker.compose.dist.backend.build papernet.docker.compose.dist.frontend.build
+
+papernet.docker.compose.all: docker.is.cache papernet.docker.compose.dev.all papernet.docker.compose.dist.all
 
 ## #################################################################
 ## BACK-END
@@ -31,10 +31,12 @@ $(APP_NAME).docker.compose.dist.all: docker.is.cache papernet.docker.compose.dis
 # - papernet-web        scratch-latest      b566bfc99ac1        2 hours ago         22.6 MB
 # - papernet-cli        scratch-latest      1c70e353bf2e        2 hours ago         20.7 MB
 
+# make papernet.docker.compose.all DOCKER_BUILD_NOCACHE=true
+
 # Examples:
-# - make papernet.docker.compose.backend.all 
-# - make papernet.docker.compose.backend.all DOCKER_BUILD_NOCACHE=true
-papernet.docker.compose.backend.all: papernet.docker.compose.dev.backend.build papernet.docker.compose.dist.backend.cli.wrap papernet.docker.compose.dist.backend.web.wrap
+# - make papernet.docker.compose.backend.dev.all 
+# - make papernet.docker.compose.backend.dev.all DOCKER_BUILD_NOCACHE=true
+papernet.docker.compose.backend.dev.all: papernet.docker.compose.dev.backend.build papernet.docker.compose.dev.backend.run papernet.docker.compose.dist.backend.cli.wrap papernet.docker.compose.dist.backend.web.wrap
 
 papernet.docker.compose.dist.backend.cli.wrap:
 	@docker-compose -f docker-compose.prod.yml build $(DOCKER_BUILD_CACHE_ARG) cli
@@ -46,6 +48,12 @@ papernet.docker.compose.dist.backend.web.wrap:
 papernet.docker.compose.dev.backend.build:
 	@echo "Running docker 'development' container for $(APP_NAME), component 'back-end'"
 	@docker-compose -f docker-compose.yml build $(DOCKER_BUILD_CACHE_ARG) backend_dev
+
+papernet.docker.compose.dist.backend.cli.run:
+	@docker-compose -f docker-compose.prod.yml run cli
+
+papernet.docker.compose.dist.backend.web.run:
+	@docker-compose -f docker-compose.prod.yml run web
 
 papernet.docker.compose.dev.backend.run:
 	@echo "Running docker 'development' container for $(APP_NAME), component 'back-end'"

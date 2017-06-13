@@ -2,5 +2,5 @@
 gzip
 log stdout
 errors stderr
-root /code/content
+root /code/app
 tls off

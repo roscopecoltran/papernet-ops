@@ -1,0 +1,31 @@
+FROM alpine:3.6
+LABEL maintainer="rosco_pecoltran@msn.com"
+
+ARG PAPERNET_VERSION=${PAPERNET_VERSION:-0.9.1}
+ARG PAPERNET_PREFIX_PATH=${PAPERNET_PREFIX_PATH:-"/app"}
+ARG PAPERNET_EXECUTABLE=${PAPERNET_EXECUTABLE:-"papernet_cli"}
+
+ARG GOSU_VERSION=${GOSU_VERSION:-1.10}
+ARG APK_RUNTIME=${APK_RUNTIME:-"openssl ca-certificates"}
+
+ADD https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-amd64 /usr/local/sbin/gosu
+ADD https://github.com/bobinette/papernet/releases/download/${PAPERNET_VERSION}/papernet-linux-amd64-cli ${PAPERNET_PREFIX_PATH}/${PAPERNET_EXECUTABLE}
+
+WORKDIR /app
+
+RUN chmod +x /usr/local/sbin/gosu \
+	&& chmod +x ${PAPERNET_PREFIX_PATH}/${PAPERNET_EXECUTABLE} \
+ 	&& apk --no-cache --no-progress add ${APK_RUNTIME} \
+ 	&& adduser -D app -h /data -s /bin/sh
+
+# NSSwitch configuration file
+COPY ./conf/nsswitch.conf /etc/nsswitch.conf
+
+# Container configuration
+VOLUME ["/app/data"]
+
+EXPOSE 1705
+
+# Container Start
+ENTRYPOINT [ "/usr/local/sbin/gosu", "app", "${PAPERNET_PREFIX_PATH}/${PAPERNET_EXECUTABLE}" ]
+# CMD ["index", "create", "--index=./data/papernet.index", "--mapping=./data/mapping.json"]

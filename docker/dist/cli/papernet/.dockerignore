@@ -1,2 +1,7 @@
 data
-Dockerfile
+data/
+data/**
+xc
+xc/
+xc/**
+Dockerfile*

@@ -9,20 +9,30 @@ else
 	ENTRYPOINT_ARGS=${@:2}
 fi
 
+export GOPATH=/tmp/go
+export PATH=${PATH}:${GOPATH}/bin
+export BUILDPATH=${GOPATH}/src/${PROJECT_VCS_PROVIDER}/${PROJECT_NAMESPACE}/${PROJECT_NAME}
+export PKG_CONFIG_PATH="/usr/lib/pkgconfig/:/usr/local/lib/pkgconfig/"
+
 export APP_CERTIFICATES="/app/configuration/certs"
 export APP_SSL_SELFSIGNED_BASENAME="${PROJECT_NAME}_self-signed"
+
+# /dist/{{.Dir}}/xc/{{.OS}}/${PROJECT_NAME}-{{.OS}}-{{.Arch}}-{{.Dir}}
 
 export APP_WEB="/dist/web/xc/linux/${PROJECT_NAME}-linux-amd64-web"
 export APP_CLI="/dist/cli/xc/linux/${PROJECT_NAME}-linux-amd64-cli"
 
+ls -l /dist/xc/web/linux/
+ls -l /dist/xc/cli/linux/
+
+mkdir -p /dist/cli
 if [ -f "${APP_CLI}" ];then
-	mkdir -p /dist/cli
 	rm -f /dist/cli/${PROJECT_NAME}_cli
 	cp ${APP_CLI} /dist/cli/${PROJECT_NAME}_cli
 fi
 
+mkdir -p /dist/web
 if [ -f "${APP_WEB}" ];then
-	mkdir -p /dist/web
 	rm -f /dist/web/${PROJECT_NAME}_web
 	cp ${APP_WEB} /dist/web/${PROJECT_NAME}_web
 fi
@@ -31,25 +41,6 @@ if [ -d "/tmp/go" ];then
 	export GOPATH=/tmp/go
 	export PATH=${PATH}:${GOPATH}/bin
 	export PROJECT_SOURCE_PATH=${GOPATH}/src/${PROJECT_VCS_PROVIDER}/${PROJECT_NAMESPACE}/${PROJECT_NAME}
-fi
-
-if [ "$ENTRYPOINT_ECHO" == true ];then
-
-		echo " |--- ENTRYPOINT_ARGS: "
-		echo " |    |-- ARG1:		${1}"
-		echo " |    |-- ARG2:		${2}"
-		echo " |    |-- CASE:		$CASE"
-		echo " |"
-
-		echo " |--- ENTRYPOINT_CONFIG: "
-		echo " |    |-- ENTRYPOINT_MODE:    		${ENTRYPOINT_MODE}"
-		echo " |    |-- ENTRYPOINT_FALLBACK:		${ENTRYPOINT_FALLBACK}"
-		echo " |    |-- ENTRYPOINT_ECHO:    		${ENTRYPOINT_ECHO}"
-		echo " |"
-
-		echo " |--- APP_CONFIG: "
-		echo " |    |-- APP_PACKAGE_URI: ${APP_PACKAGE_URI}"
-
 fi
 
 if [ "$ENTRYPOINT_MODE" == "build_run" ];then
@@ -96,32 +87,6 @@ if [ "$ENTRYPOINT_MODE" == "build_run" ];then
 		cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/cli/conf/
 	fi
 
-	if [ "$ENTRYPOINT_ECHO" == true ];then
-
-		echo " |    |-- APP_GIT_COMMIT:			${APP_GIT_COMMIT}"
-		echo " |    |-- APP_GIT_DIRTY: 			${APP_GIT_DIRTY}"
-		echo " |"
-
-		echo " |--- CONTAINER CONPONENTS: "
-		echo " |    |"
-		echo " |    |__VCS:"
-		echo " |    |  |"
-		echo " |    |  |-- GIT_EXECUTABLE:		${GIT_EXECUTABLE}"
-		echo " |    |"
-		echo " |    |__LANGUAGES:"
-		echo " |       |"
-		echo " |       |__ GOLANG:"
-		echo " |         |"
-		echo " |         |-- GOLANG_EXECUTABLE:		${GOLANG_EXECUTABLE}"
-		echo " |         |-- GOX_EXECUTABLE:   		${GOX_EXECUTABLE}"
-		echo " |         |-- GLIDE_EXECUTABLE: 		${GLIDE_EXECUTABLE}"
-		echo " |         |-- GODEP_EXECUTABLE: 		${GODEP_EXECUTABLE}"
-		echo " |         |-- NUT_EXECUTABLE:   		${NUT_EXECUTABLE}"
-		echo " |         |-- MYKE_EXECUTABLE:  		${MYKE_EXECUTABLE}"
-		echo " |         |-- MKJWK_EXECUTABLE: 		${MKJWK_EXECUTABLE}"
-		echo " |"
-	fi
-
 fi
 
 cross_buid () {
@@ -155,17 +120,20 @@ cross_buid () {
 		gox -os="linux darwin" -arch="amd64" -output /dist/{{.Dir}}/xc/{{.OS}}/${PROJECT_NAME}-{{.OS}}-{{.Arch}}-{{.Dir}} $(glide novendor)
 	fi
 
-	if [ -f "${APP_CLI}" ];then
+	echo " - APP_CLI: ${APP_CLI}"
+	echo " - APP_WEB: ${APP_WEB}"
+
+	#if [ -f "${APP_CLI}" ];then
 		mkdir -p /dist/cli
 		rm -f /dist/cli/${PROJECT_NAME}_cli
 		cp ${APP_CLI} /dist/cli/${PROJECT_NAME}_cli
-	fi
+	#fi
 
-	if [ -f "${APP_WEB}" ];then
+	#if [ -f "${APP_WEB}" ];then
 		mkdir -p /dist/web
 		rm -f /dist/web/${PROJECT_NAME}_web
 		cp ${APP_WEB} /dist/web/${PROJECT_NAME}_web
-	fi
+	#fi
 
 }
 

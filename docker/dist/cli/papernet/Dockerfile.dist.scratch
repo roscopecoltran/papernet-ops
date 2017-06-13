@@ -1,0 +1,16 @@
+FROM scratch
+LABEL maintainer="rosco_pecoltran@msn.com"
+
+ARG PAPERNET_PREFIX_PATH=${PAPERNET_PREFIX_PATH:-"/app"}
+ARG PAPERNET_EXECUTABLE=${PAPERNET_EXECUTABLE:-"papernet_cli"}
+
+ADD ./conf /app/conf
+COPY ./bin/${PAPERNET_EXECUTABLE} ${PAPERNET_PREFIX_PATH}/${PAPERNET_EXECUTABLE}
+
+ENV PATH=/app:$PATH
+
+VOLUME ["/app/data"]
+WORKDIR /app
+
+ENTRYPOINT ["${PAPERNET_PREFIX_PATH}/${PAPERNET_EXECUTABLE}"]
+# CMD ["index", "create", "--index=./data/papernet.index", "--mapping=./data/mapping.json"]

@@ -52,8 +52,8 @@ include $(CURDIR)/scripts/makefile/compile/golang_xc.mk
 include $(CURDIR)/scripts/makefile/experimental/*.mk
 
 ## sub-projects (official) addons helpers
-include $(CURDIR)/scripts/makefile/papernet.*.mk
-include $(CURDIR)/scripts/makefile/elasticfeed.*.mk
+include $(CURDIR)/scripts/makefile/papernet*.mk
+include $(CURDIR)/scripts/makefile/elasticfeed*.mk
 
 ## #################################################################
 ## Project docker info
