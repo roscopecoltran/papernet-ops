@@ -1,11 +1,12 @@
 .vagrant
 vault_pass.txt
 
-docker/dist/cli/papernet/papernet_cli
-docker/dist/web/papernet/papernet_web
+docker/dist/cli/papernet/bin/papernet_cli
+docker/dist/web/papernet/bin/papernet_web
 docker/data
 docker/data/
 docker/data/**
+docker/conf/papernet/certs/*
 
 *.crt
 *.csr

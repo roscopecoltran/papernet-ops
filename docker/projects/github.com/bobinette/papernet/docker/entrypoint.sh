@@ -38,6 +38,8 @@ generate_oauth_basic () {
 		mkjwk
 		ls -l rsa_key 
 		ls -l rsa_key.jwk
+		mkdir -p /dist/cli/conf
+		mkdir -p /dist/web/conf
 		cp -f rsa_key /dist/web/conf/${PROJECT_NAME}_rsa-key
 		cp -f rsa_key /dist/cli/conf/${PROJECT_NAME}_rsa-key
 		cp -f rsa_key.jwk /dist/cli/conf/${PROJECT_NAME}_rsa-key.jwk
@@ -46,19 +48,21 @@ generate_oauth_basic () {
 
 }
 
-
 generate_self_signed () {
 
 	set +e
 	OPENSSL_EXECUTABLE=$(which openssl)
 	set -e
 
-	if [ "${OPENSSL_EXECUTABLE}" != "" ]; then
-		openssl req -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.csr -subj "${APP_PREBUILD_SSL_SELFSIGNED_SUBJ}" -new -newkey rsa:2048 -nodes -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key
-		openssl req -x509 -sha256 -nodes -days 365 -subj "${APP_PREBUILD_SSL_SELFSIGNED_SUBJ}" -newkey rsa:2048 -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.crt
-		cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/web/conf/
-		cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/cli/conf/
+	if [ "${OPENSSL_EXECUTABLE}" == "" ]; then
+		apk --update --no-cache add openssl
 	fi
+
+	openssl req -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.csr -subj "$APP_PREBUILD_SSL_SELFSIGNED_SUBJ" -new -newkey rsa:2048 -nodes -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key
+	openssl req -x509 -sha256 -nodes -days 365 -subj "$APP_PREBUILD_SSL_SELFSIGNED_SUBJ" -newkey rsa:2048 -keyout ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.key -out ${APP_CERTIFICATES}/${APP_SSL_SELFSIGNED_BASENAME}.crt
+
+	cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/web/conf/
+	cp -Rf ${APP_SSL_SELFSIGNED_BASENAME}.* /dist/cli/conf/
 
 }
 
@@ -66,8 +70,7 @@ cross_buid () {
 
 	if [ "${GOLANG_EXECUTABLE}" == "" ]; then
 		APK_BUILD="curl git mercurial bzr gcc musl-dev go g++ make"
-		apk update 
-		apk --no-cache --no-progress --virtual BUILD_DEPS add ${APK_BUILD}
+		apk --update --no-cache --no-progress --virtual BUILD_DEPS add ${APK_BUILD}
 	fi
 
 	if [ "${GOX_EXECUTABLE}" == "" ]; then
@@ -99,17 +102,13 @@ cross_buid () {
 	generate_oauth_basic
 	generate_self_signed
 
-	#if [ -f "${APP_CLI}" ];then
-		mkdir -p /dist/cli
-		rm -f /dist/cli/${PROJECT_NAME}_cli
-		cp ${APP_CLI} /dist/cli/${PROJECT_NAME}_cli
-	#fi
+	mkdir -p /dist/cli
+	rm -f /dist/cli/${PROJECT_NAME}_cli
+	cp ${APP_CLI} /dist/cli/${PROJECT_NAME}_cli
 
-	#if [ -f "${APP_WEB}" ];then
-		mkdir -p /dist/web
-		rm -f /dist/web/${PROJECT_NAME}_web
-		cp ${APP_WEB} /dist/web/${PROJECT_NAME}_web
-	#fi
+	mkdir -p /dist/web
+	rm -f /dist/web/${PROJECT_NAME}_web
+	cp ${APP_WEB} /dist/web/${PROJECT_NAME}_web
 
 }
 
@@ -119,70 +118,49 @@ case "$CASE" in
 	;;
 
 	'generate-key')
-		if [ "${MKJWK_EXECUTABLE}" == "" ]; then
-		  go get -v -u github.com/dqminh/organizer/mkjwk
-		fi
-	  mkjwk ${@:2}
-	  ls -l rsa_key 
-	  ls -l rsa_key.jwk
-	  mkdir -p /app/configuration/certs
-	  rm -f /app/configuration/certs/rsa_key*
-	  cp -f rsa_key* /app/configuration/certs
-	  ls -l /app/configuration/certs
+		generate_oauth_basic
 	;;
 
-	'cli')
-
-		if [ "$ENTRYPOINT_MODE" == "rebuild" ];then	
-			GOOS=linux GOARCH=amd64 go build -o /dist/cli/${PROJECT_NAME}-linux-amd64-cli cmd/cli/*.go
-		fi
-
-		if [ "$ENTRYPOINT_MODE" == "run" ];then	
-		  exec go run cmd/cli/main.go ${@:2}
-		else
-		  exec /dist/cli/${PROJECT_NAME}-linux-amd64-cli ${@:2}
-		fi	
-
+	'cli-build')
+		GOOS=linux GOARCH=amd64 go build -o /dist/cli/${PROJECT_NAME}_cli cmd/cli/*.go
 	;;
 
-	'web')
-
-		if [ "$ENTRYPOINT_MODE" == "rebuild" ];then	
-			GOOS=linux GOARCH=amd64 go build -o /dist/web/${PROJECT_NAME}-linux-amd64-web cmd/web/*.go
-		fi
-
-		if [ "$ENTRYPOINT_MODE" == "run" ];then	
-		  exec go run cmd/web/main.go ${@:2}
-		else
-		  exec /dist/web/${PROJECT_NAME}-linux-amd64-web ${@:2}
-		fi	
-
+	'cli-run')
+	  	exec go run cmd/cli/main.go ${@:2}
 	;;
 
-	'index')
-		if [ "$ENTRYPOINT_MODE" == "rebuild" ];then
-			GOOS=linux GOARCH=amd64 go build -o /dist/${PROJECT_NAME}-linux-amd64-cli cmd/cli/*.go
-			exec /dist/${PROJECT_NAME}-linux-amd64-cli index create --index=${APP_DATA_DIR:-"/data"}/${PROJECT_NAME}.index --mapping=${APP_INDEX_MAPPING_FILE:-"./bleve/mapping.json"}
-		else			
-			#exec go run cmd/cli/*.go index create ${@:2}
-			exec go run cmd/cli/*.go index create --index=${APP_DATA_DIR:-"/data"}/${PROJECT_NAME}.index --mapping=${APP_INDEX_MAPPING_FILE:-"./bleve/mapping.json"}
-		fi
+	'cli-exec')
+		exec /dist/cli/${PROJECT_NAME}_cli ${@:2}
+	;;
+
+	'web-build')
+		GOOS=linux GOARCH=amd64 go build -o /dist/web/${PROJECT_NAME}_web cmd/web/*.go
+	;;
+
+	'web-run')
+		exec go run cmd/web/main.go ${@:2}
+	;;
+
+	'web-exec')
+		exec /dist/web/${PROJECT_NAME}_web ${@:2}
+	;;
+
+	'cli-exec-index')
+		exec /dist/cli/${PROJECT_NAME}_cli index create --index=${APP_DATA_DIR:-"/data"}/${PROJECT_NAME}.index --mapping=${APP_INDEX_MAPPING_FILE:-"./bleve/mapping.json"}
+	;;
+
+	'cli-run-index')
+		exec go run cmd/cli/*.go index create --index=${APP_DATA_DIR:-"/data"}/${PROJECT_NAME}.index --mapping=${APP_INDEX_MAPPING_FILE:-"./bleve/mapping.json"}
 	;;
 
 	'bash')
-		if [ "${BASH_EXECUTABLE}" == "" ]; then
-			apk --update --no-progress --no-cache add bash # --no-progress 
-		fi
+		apk --update --no-progress --no-cache add bash # --no-progress 
 		exec /bin/bash ${@:2}
-
 	;;
 
 	'bashpp')
-		if [ "${BASH_EXECUTABLE}" == "" ]; then
-			apk --update --no-progress --no-cache add bash nano tree # --no-progress 
-		fi
+		apk --update --no-progress --no-cache add bash nano tree # --no-progress 
 		exec /bin/bash ${@:2}
-
 	;;
 
 	'sh')
@@ -191,17 +169,13 @@ case "$CASE" in
 
 	'test')
 		exec go test $(go list ./... | grep -v /vendor/)
-
 	;;
 
   *)
 
-	touch /dist/web/${PROJECT_NAME}_web
-	touch /dist/cli/${PROJECT_NAME}_cli
-
 	generate_oauth_basic
 	generate_self_signed
-
+	find ./dist -type f -exec touch {} +
 	echo " *** Dev Container '${APP_NAME} Back-End' *** exit now..."
 	;;
 esac
