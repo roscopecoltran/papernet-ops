@@ -22,9 +22,17 @@ services:
     volumes:
       - ./data/papernet:/app/data
       - ./conf/certs:/app/conf
-    #network_mode: "host"
     networks:
      - default
+    labels:
+      - "org.label-schema.vendor=bobinette"
+      - "org.label-schema.url=https://github.com/bobinette/papernet-front"
+      - "org.label-schema.name=Papernet 'FRONT-END' - Production"
+      - "org.label-schema.description=Front-end of the papernet project."
+      - "org.label-schema.version=0.9.3"
+      - "org.label-schema.docker.schema-version=1.0"
+      - "papernet.component.groupd=frontend"
+      - "papernet.component.type=dist"
 
   cli:
     image: papernet-backend-cli:alpine-dist
@@ -44,10 +52,12 @@ services:
     labels:
       - "org.label-schema.vendor=bobinette"
       - "org.label-schema.url=https://github.com/bobinette/papernet"
-      - "org.label-schema.name=Papernet - CLI"
+      - "org.label-schema.name=Papernet 'BACK-END' CLI - Production"
       - "org.label-schema.description=Very simple tool to keep track of the papers you read."
       - "org.label-schema.version=0.9.1"
       - "org.label-schema.docker.schema-version=1.0"
+      - "papernet.component.group=backend"
+      - "papernet.component.type=dist"
 
   web:
     image: papernet-backend-web:alpine-dist
@@ -59,7 +69,6 @@ services:
       - 1705:1705
     restart: unless-stopped
     entrypoint: /app/papernet_web
-    # command: ["--port", "1705"]
     networks:
       - default
     volumes:
@@ -68,10 +77,12 @@ services:
     labels:
       - "org.label-schema.vendor=bobinette"
       - "org.label-schema.url=https://github.com/bobinette/papernet"
-      - "org.label-schema.name=Papernet - Web API"
+      - "org.label-schema.name=Papernet 'BACK-END' WEB - Production"
       - "org.label-schema.description=Very simple tool to keep track of the papers you read."
       - "org.label-schema.version=0.9.1"
       - "org.label-schema.docker.schema-version=1.0"
+      - "papernet.component.group=backend"
+      - "papernet.component.type=dist"
 
 ### Networks Setup ############################################
 

@@ -3,31 +3,31 @@
 # ----------------------------------------
 # Auth service
 [auth]
-key = "configuration/hs256.json"
+key = "./configuration/hs256.json"
 
 [auth.cayley]
-store = "data/auth.graph"
+store = "./data/auth.graph"
 # Auth service
 # ----------------------------------------
 
 # ----------------------------------------
 # Oauth service
 [oauth]
-bolt="/app/data/oauth.db"
+bolt="./data/oauth.db"
 
 [oauth.email]
 enabled=true
 
 [oauth.google]
 enabled=true
-file="/app/configuration/oauth_google.json"
+file="./configuration/oauth_google.json"
 # Oauth service
 # ----------------------------------------
 
 # ----------------------------------------
 # legacy
 [bolt]
-store = "/app/data/papernet.db"
+store = "./data/papernet.db"
 
 [bleve]
-store = "/app/data/papernet.index"
+store = "./data/papernet.index"

@@ -41,10 +41,12 @@ services:
     labels:
       - "org.label-schema.vendor=bobinette"
       - "org.label-schema.url=https://github.com/bobinette/papernet"
-      - "org.label-schema.name=Papernet - Dev container"
+      - "org.label-schema.name=Papernet 'BACK-END' - DEV"
       - "org.label-schema.description=Very simple tool to keep track of the papers you read."
       - "org.label-schema.version=0.9.1"
       - "org.label-schema.docker.schema-version=1.0"
+      - "papernet.component.groupd=backend"
+      - "papernet.component.type=dev"
 
   frontend_dev:    
     image: papernet-front:alpine-nodejs-dev
@@ -66,10 +68,12 @@ services:
     labels:
       - "org.label-schema.vendor=bobinette"
       - "org.label-schema.url=https://github.com/bobinette/papernet-front"
-      - "org.label-schema.name=Papernet - Front-end - Dev Container"
+      - "org.label-schema.name=Papernet 'FRONT-END' - DEV"
       - "org.label-schema.description=Front-end of the papernet project."
       - "org.label-schema.version=0.9.3"
       - "org.label-schema.docker.schema-version=1.0"
+      - "papernet.component.groupd=frontend"
+      - "papernet.component.type=dev"
 
 ### Networks Setup ############################################
 

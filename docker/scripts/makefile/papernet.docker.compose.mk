@@ -26,6 +26,7 @@ papernet.docker.compose.all: docker.is.cache papernet.docker.compose.dev.all pap
 ## BACK-END
 ## #################################################################
 
+# notes:
 # Containers size:
 # - papernet-backend    alpine-go1.8-dev    460d3c817835        17 hours ago        772 MB
 # - papernet-web        scratch-latest      b566bfc99ac1        2 hours ago         22.6 MB

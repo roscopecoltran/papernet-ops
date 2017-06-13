@@ -60,9 +60,9 @@ include $(CURDIR)/scripts/makefile/elasticfeed*.mk
 ## #################################################################
 
 ## docker
-DOCKER_BUILD_NOCACHE			:= false
+DOCKER_BUILD_NOCACHE			:= true
 DOCKER_IMAGE_TAG 				:= "latest"
-DOCKERFILE_DEV               	:= "build.Dockerfile"
+DOCKERFILE_DEV               	:= "Dockerfile.build.alpine"
 DOCKERFILE_DEFAULT_ENTRYPOINT	:= "bashpp"
 
 DOCKERFILE_BACKEND_BASE_DIST	:= "scratch" 
@@ -92,58 +92,56 @@ DOCKER_RUN_OPTS     	:= $(PAPERNET_ENVS) $(PAPERNET_MOUNT) "$(PAPERNET_DEV_IMAGE
 DOCKER_RUN_APP      	:= docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_APP_NOTTY	:= docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
 
-## sub-projects (official) addons helpers
-# include $(CURDIR)/scripts/makefile/docker*.mk
-# include $(CURDIR)/scripts/makefile/docker.machine.mk
+compose.all: papernet.docker.compose.all
 
 # local targets
-default: binary
-all: deps cross
-
-dist:
-	@mkdir -p $(BIND_PATH)
-
-lint:
-	script/validate-golint
-
-fmt:
-	gofmt -s -l -w $(SRCS)
-
-index:
-	mkdir -p $(APP_DATA_DIR)
-	go run cmd/cli/*.go index create --index=$(APP_DATA_DIR)/$(APP_NAME).index --mapping=$(APP_INDEX_MAPPING_FILE)
+local.default: binary
+local.all: deps cross
 
 docker.is.cache:
 	@echo "is docker using cache system?"
 	@echo " - DOCKER_BUILD_NOCACHE=$(DOCKER_BUILD_NOCACHE)"
 	@echo " - DOCKER_BUILD_CACHE_ARG=$(DOCKER_BUILD_CACHE_ARG)"
 
-clean_all: clean_bin clean_data # clean_deps
+local.dist:
+	@mkdir -p $(BIND_PATH)
 
-clean_bin:
+local.lint:
+	script/validate-golint
+
+local.fmt:
+	gofmt -s -l -w $(SRCS)
+
+local.index:
+	mkdir -p $(APP_DATA_DIR)
+	go run cmd/cli/*.go index create --index=$(APP_DATA_DIR)/$(APP_NAME).index --mapping=$(APP_INDEX_MAPPING_FILE)
+
+local.clean_all: clean_bin clean_data # clean_deps
+
+local.clean_bin:
 	@rm -fR $(CURDIR)/$(BIND_DIR)
 	@mkdir -p $(CURDIR)/$(BIND_DIR)
 
-clean_data:
+local.clean_data:
 	@rm -fR $(APP_DATA_DIR)
 	@mkdir -p $(APP_DATA_DIR)
 
-binary:
+local.binary:
 	@mkdir -p ./$(BIND_DIR)
 	@go build -o ./$(BIND_DIR)/web/$(APP_NAME)_web cmd/web/main.go
 	@go build -o ./$(BIND_DIR)/cli/$(APP_NAME)_cli cmd/cli/*.go
 
-test-local:
+local.test-local:
 	@go test $(TEST) $(TESTARGS) -timeout=10s
 
-testrace:
+local.testrace:
 	@go test -race $(TEST) $(TESTARGS)
 
-deps:
+local.deps:
 	@go get -u github.com/tools/godep
 	@dep ensure
 
-deps.glide:
+local.deps.glide:
 	@go get -u -v github.com/Masterminds/glide
 	@glide install --strip-vendor
 
